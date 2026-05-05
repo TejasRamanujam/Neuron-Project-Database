@@ -14,7 +14,7 @@ class Project(Base):
     architectures_used = Column(JSON, nullable=False)
     libraries_used = Column(JSON, nullable=False)
     difficulty = Column(String, nullable=False)
-    estimated_time = Column(String, nullable=False)
+    build_plan = Column(Text, nullable=False)
     ui_components = Column(JSON, nullable=False)
     repo_inspiration = Column(JSON, nullable=False)
     resume_gap_filled = Column(Text, nullable=False)

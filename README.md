@@ -35,6 +35,7 @@ Open http://localhost:5173
 - **Difficulty filter** (Beginner / Intermediate / Advanced)
 - **Tag filter** (ML/AI, Full-Stack, Real-Time, DevOps, Security, etc.)
 - **Project detail modal** with full specs: problem, architecture, features, UI components, learning outcomes, resume impact
+- **Build plan** — each project includes a detailed step-by-step build plan covering every phase, library, architecture, and UI component
 - **Responsive grid** layout for browsing
 
 ## 18 Projects Included

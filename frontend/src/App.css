@@ -193,15 +193,11 @@
 }
 .card-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-top: auto;
   padding-top: 0.5rem;
   border-top: 1px solid var(--border);
-}
-.card-time {
-  font-size: 0.8rem;
-  color: var(--text-muted);
 }
 .card-link {
   font-size: 0.8rem;
@@ -265,13 +261,6 @@
   font-weight: 700;
   flex: 1;
 }
-.modal-time {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  background: var(--bg);
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-}
 .modal-subtitle {
   color: var(--text-muted);
   font-size: 0.95rem;
@@ -333,6 +322,40 @@
   color: var(--green);
   border: 1px solid rgba(76, 175, 80, 0.25);
 }
+/* Build Plan */
+.build-plan {
+  background: rgba(15, 17, 23, 0.5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  max-height: 500px;
+  overflow-y: auto;
+}
+.plan-phase {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent-light);
+  margin: 1rem 0 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.plan-phase:first-of-type {
+  margin-top: 0;
+}
+.plan-step {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0.5rem 0 0.15rem;
+}
+.plan-line {
+  font-size: 0.83rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0.1rem 0;
+  padding-left: 0.5rem;
+}
+
 .resume-gap {
   background: rgba(124, 92, 252, 0.06);
   border: 1px solid rgba(124, 92, 252, 0.15);

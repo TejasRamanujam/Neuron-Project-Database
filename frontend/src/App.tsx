@@ -147,7 +147,6 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: (p: Proj
         ))}
       </div>
       <div className="card-footer">
-        <span className="card-time">{project.estimated_time}</span>
         <span className="card-link">View details →</span>
       </div>
     </div>
@@ -168,7 +167,6 @@ function ProjectModal({ project, onClose }: { project: Project; onClose: () => v
           >
             {project.difficulty}
           </span>
-          <span className="modal-time">{project.estimated_time}</span>
         </div>
         <p className="modal-subtitle">{project.subtitle}</p>
 
@@ -180,6 +178,22 @@ function ProjectModal({ project, onClose }: { project: Project; onClose: () => v
         <section>
           <h3>Description</h3>
           <p>{project.description}</p>
+        </section>
+
+        <section className="build-plan">
+          <h3>Build Plan</h3>
+          <div className="plan-content">
+            {project.build_plan.split('\n').map((line, i) => {
+              const t = line.trim()
+              if (t.startsWith('## ')) return <h4 key={i} className="plan-phase">{t.replace('## ', '')}</h4>
+              if (t.startsWith('**Step') || t.match(/^Step \d+:/)) {
+                const stepText = t.replace(/\*\*/g, '')
+                return <p key={i} className="plan-step">{stepText}</p>
+              }
+              if (!t) return null
+              return <p key={i} className="plan-line">{t.replace(/\*\*/g, '')}</p>
+            })}
+          </div>
         </section>
 
         <div className="modal-columns">

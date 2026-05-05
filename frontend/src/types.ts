@@ -8,7 +8,7 @@ export interface Project {
   architectures_used: string[]
   libraries_used: string[]
   difficulty: string
-  estimated_time: string
+  build_plan: string
   ui_components: string[]
   repo_inspiration: string[]
   resume_gap_filled: string

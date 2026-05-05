@@ -11,7 +11,7 @@ class ProjectBase(BaseModel):
     architectures_used: List[str]
     libraries_used: List[str]
     difficulty: str
-    estimated_time: str
+    build_plan: str
     ui_components: List[str]
     repo_inspiration: List[str]
     resume_gap_filled: str
@@ -30,4 +30,3 @@ class SearchParams(BaseModel):
     query: Optional[str] = ""
     tags: Optional[List[str]] = None
     difficulty: Optional[List[str]] = None
-    min_learning: Optional[int] = None
