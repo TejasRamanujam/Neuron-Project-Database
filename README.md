@@ -2,6 +2,10 @@
 
 A searchable database of high-impact CS project ideas designed to elevate your resume. Each project uses meaningfully high-level architectures (FastAPI, microservices, event-driven), modern libraries (XGBoost, LightGBM, LangChain, Celery), and strong UI components.
 
+## 🔗 Live Demo
+
+**[https://project-database-seven.vercel.app](https://project-database-seven.vercel.app)** — React + FastAPI on Vercel, backed by Neon Postgres.
+
 ## Prerequisites
 
 - Python 3.10+
