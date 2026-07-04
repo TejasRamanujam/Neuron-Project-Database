@@ -1,12 +1,16 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import type { Project } from './types'
 import { fetchProjects, fetchTags, fetchDifficulties } from './api'
 import './App.css'
 
-const DIFFICULTY_COLORS: Record<string, string> = {
-  Beginner: '#4caf50',
-  Intermediate: '#ff9800',
-  Advanced: '#f44336',
+const DIFFICULTY_CLASS: Record<string, string> = {
+  Beginner: 'diff-beginner',
+  Intermediate: 'diff-intermediate',
+  Advanced: 'diff-advanced',
+}
+
+function difficultyClass(d: string) {
+  return DIFFICULTY_CLASS[d] || 'diff-default'
 }
 
 function App() {
@@ -14,16 +18,23 @@ function App() {
   const [tags, setTags] = useState<string[]>([])
   const [difficulties, setDifficulties] = useState<string[]>([])
   const [query, setQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [selectedDiffs, setSelectedDiffs] = useState<string[]>([])
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
+  const searchRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query), 220)
+    return () => clearTimeout(t)
+  }, [query])
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
       const data = await fetchProjects({
-        query,
+        query: debouncedQuery,
         tags: selectedTags.join(','),
         difficulty: selectedDiffs.join(','),
       })
@@ -31,7 +42,7 @@ function App() {
     } finally {
       setLoading(false)
     }
-  }, [query, selectedTags, selectedDiffs])
+  }, [debouncedQuery, selectedTags, selectedDiffs])
 
   useEffect(() => {
     fetchTags().then(setTags)
@@ -42,77 +53,166 @@ function App() {
     load()
   }, [load])
 
+  // "/" focuses search
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
+        e.preventDefault()
+        searchRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  const hasFilters = query !== '' || selectedTags.length > 0 || selectedDiffs.length > 0
+  const clearFilters = () => {
+    setQuery('')
+    setSelectedTags([])
+    setSelectedDiffs([])
+  }
+
   return (
     <div className="app">
-      <header className="header">
-        <h1>CS Project Database</h1>
-        <p className="subtitle">
-          Searchable project ideas to elevate your resume — inspired by career-ops, maigret &amp; Archon
-        </p>
+      <header className="topbar">
+        <div className="topbar-inner">
+          <div className="brand">
+            <span className="brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 32 32" width="18" height="18">
+                <path d="M9 10h14M9 16h10M9 22h6" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                <circle cx="24" cy="22" r="3.2" fill="#4cc9f0" stroke="none" />
+              </svg>
+            </span>
+            <span className="brand-name">Project Database</span>
+            <span className="brand-tag">CS ideas</span>
+          </div>
+          <a className="back-pill" href="https://tejas-live-demos.vercel.app">
+            <span aria-hidden="true">&larr;</span> Back to demos
+          </a>
+        </div>
       </header>
 
-      <div className="toolbar">
-        <input
-          className="search-input"
-          type="text"
-          placeholder="Search projects by title, tech, library, or tag..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <div className="filters">
+      <section className="hero">
+        <h1>Find your next build.</h1>
+        <p className="hero-sub">
+          Searchable CS project ideas with full build plans, tech stacks, and resume impact —
+          inspired by career-ops, maigret &amp; Archon.
+        </p>
+        <div className="search-wrap">
+          <svg className="search-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2" />
+            <path d="m20 20-3.8-3.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <input
+            ref={searchRef}
+            className="search-input"
+            type="text"
+            placeholder="Search by title, tech, library, or tag..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search projects"
+          />
+          <kbd className="search-kbd" aria-hidden="true">/</kbd>
+        </div>
+      </section>
+
+      <div className="layout">
+        <aside className="sidebar" aria-label="Filters">
+          <div className="sidebar-head">
+            <h2 className="sidebar-title">Filters</h2>
+            {hasFilters && (
+              <button className="clear-btn" onClick={clearFilters}>
+                Clear all
+              </button>
+            )}
+          </div>
+
           <div className="filter-group">
             <span className="filter-label">Difficulty</span>
             <div className="filter-chips">
-              {difficulties.map((d) => (
-                <button
-                  key={d}
-                  className={`chip ${selectedDiffs.includes(d) ? 'active' : ''}`}
-                  style={selectedDiffs.includes(d) ? { borderColor: DIFFICULTY_COLORS[d] || '#888' } : {}}
-                  onClick={() =>
-                    setSelectedDiffs((prev) =>
-                      prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]
-                    )
-                  }
-                >
-                  {d}
-                </button>
-              ))}
+              {difficulties.map((d) => {
+                const active = selectedDiffs.includes(d)
+                return (
+                  <button
+                    key={d}
+                    className={`chip ${difficultyClass(d)} ${active ? 'active' : ''}`}
+                    aria-pressed={active}
+                    onClick={() =>
+                      setSelectedDiffs((prev) =>
+                        prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]
+                      )
+                    }
+                  >
+                    <span className="chip-dot" aria-hidden="true" />
+                    {d}
+                  </button>
+                )
+              })}
             </div>
           </div>
+
           <div className="filter-group">
             <span className="filter-label">Tags</span>
             <div className="filter-chips">
-              {tags.map((t) => (
-                <button
-                  key={t}
-                  className={`chip ${selectedTags.includes(t) ? 'active-tag' : ''}`}
-                  onClick={() =>
-                    setSelectedTags((prev) =>
-                      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]
-                    )
-                  }
-                >
-                  {t}
-                </button>
-              ))}
+              {tags.map((t) => {
+                const active = selectedTags.includes(t)
+                return (
+                  <button
+                    key={t}
+                    className={`chip tag ${active ? 'active' : ''}`}
+                    aria-pressed={active}
+                    onClick={() =>
+                      setSelectedTags((prev) =>
+                        prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]
+                      )
+                    }
+                  >
+                    {t}
+                  </button>
+                )
+              })}
             </div>
           </div>
-        </div>
-        <div className="result-count">{projects.length} project{projects.length !== 1 ? 's' : ''}</div>
-      </div>
+        </aside>
 
-      <div className="main">
-        {loading ? (
-          <div className="loading">Loading...</div>
-        ) : projects.length === 0 ? (
-          <div className="empty">No projects match your filters. Try broadening your search.</div>
-        ) : (
-          <div className="grid">
-            {projects.map((p) => (
-              <ProjectCard key={p.id} project={p} onClick={setSelectedProject} />
-            ))}
+        <main className="main">
+          <div className="results-bar">
+            <span className="result-count" role="status">
+              {loading ? 'Searching…' : `${projects.length} project${projects.length !== 1 ? 's' : ''}`}
+            </span>
           </div>
-        )}
+
+          {loading ? (
+            <div className="grid" aria-hidden="true">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <SkeletonCard key={i} />
+              ))}
+            </div>
+          ) : projects.length === 0 ? (
+            <div className="empty">
+              <div className="empty-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="28" height="28">
+                  <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="1.6" />
+                  <path d="m20 20-3.8-3.8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                  <path d="M8.5 11h5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                </svg>
+              </div>
+              <p className="empty-title">No projects match your filters</p>
+              <p className="empty-sub">Try broadening your search or removing a filter.</p>
+              {hasFilters && (
+                <button className="empty-clear" onClick={clearFilters}>
+                  Clear all filters
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="grid">
+              {projects.map((p) => (
+                <ProjectCard key={p.id} project={p} onClick={setSelectedProject} />
+              ))}
+            </div>
+          )}
+        </main>
       </div>
 
       {selectedProject && (
@@ -122,15 +222,39 @@ function App() {
   )
 }
 
+function SkeletonCard() {
+  return (
+    <div className="card skeleton-card">
+      <div className="sk sk-title" />
+      <div className="sk sk-line" />
+      <div className="sk sk-line short" />
+      <div className="sk-pills">
+        <div className="sk sk-pill" />
+        <div className="sk sk-pill" />
+        <div className="sk sk-pill" />
+      </div>
+    </div>
+  )
+}
+
 function ProjectCard({ project, onClick }: { project: Project; onClick: (p: Project) => void }) {
   return (
-    <div className="card" onClick={() => onClick(project)}>
+    <article
+      className="card"
+      role="button"
+      tabIndex={0}
+      onClick={() => onClick(project)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick(project)
+        }
+      }}
+      aria-label={`View details for ${project.title}`}
+    >
       <div className="card-header">
         <h2>{project.title}</h2>
-        <span
-          className="difficulty-badge"
-          style={{ backgroundColor: DIFFICULTY_COLORS[project.difficulty] || '#888' }}
-        >
+        <span className={`difficulty-badge ${difficultyClass(project.difficulty)}`}>
           {project.difficulty}
         </span>
       </div>
@@ -139,32 +263,53 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: (p: Proj
         {project.tech_stack.slice(0, 5).map((t) => (
           <span key={t} className="tech-pill">{t}</span>
         ))}
-        {project.tech_stack.length > 5 && <span className="tech-pill more">+{project.tech_stack.length - 5}</span>}
-      </div>
-      <div className="card-tags">
-        {project.tags.map((t) => (
-          <span key={t} className="tag-pill">{t}</span>
-        ))}
+        {project.tech_stack.length > 5 && (
+          <span className="tech-pill more">+{project.tech_stack.length - 5}</span>
+        )}
       </div>
       <div className="card-footer">
-        <span className="card-link">View details →</span>
+        <div className="card-tags">
+          {project.tags.slice(0, 3).map((t) => (
+            <span key={t} className="tag-pill">{t}</span>
+          ))}
+        </div>
+        <span className="card-link">
+          View details <span aria-hidden="true">&rarr;</span>
+        </span>
       </div>
-    </div>
+    </article>
   )
 }
 
 function ProjectModal({ project, onClose }: { project: Project; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = ''
+    }
+  }, [onClose])
+
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>×</button>
+      <div
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={project.title}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button className="modal-close" onClick={onClose} aria-label="Close details">
+          &times;
+        </button>
 
         <div className="modal-header">
           <h2>{project.title}</h2>
-          <span
-            className="difficulty-badge"
-            style={{ backgroundColor: DIFFICULTY_COLORS[project.difficulty] || '#888' }}
-          >
+          <span className={`difficulty-badge ${difficultyClass(project.difficulty)}`}>
             {project.difficulty}
           </span>
         </div>
