@@ -16,6 +16,11 @@ export async function fetchProjects(params: {
   return res.json()
 }
 
+export async function fetchProject(id: number): Promise<Project> {
+  const res = await fetch(`${API}/projects/${id}`)
+  return res.json()
+}
+
 export async function fetchTags(): Promise<string[]> {
   const res = await fetch(`${API}/tags`)
   return res.json()

@@ -5,7 +5,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': 'http://localhost:8001',
+      '/api': {
+        target: 'https://tejas-project-database.vercel.app',
+        changeOrigin: true,
+        secure: true,
+      },
     },
   },
 })
