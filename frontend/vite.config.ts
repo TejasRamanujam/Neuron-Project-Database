@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://tejas-project-database.vercel.app',
+        target: 'https://neuron-database.vercel.app',
         changeOrigin: true,
         secure: true,
       },
