@@ -4,10 +4,12 @@ Self-contained FastAPI app (mirrors backend/main.py) so Vercel's Python
 build traces all dependencies reliably. Reads DATABASE_URL (Neon Postgres
 in production; falls back to SQLite locally).
 """
+import json
 import os
+import urllib.request
 from typing import Optional, List
 
-from fastapi import FastAPI, Depends, Query
+from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, or_, cast, String, Column, Integer, Text, JSON
 from sqlalchemy.orm import DeclarativeBase, sessionmaker, Session
@@ -146,3 +148,48 @@ def list_tags(db: Session = Depends(get_db)):
 def list_difficulties(db: Session = Depends(get_db)):
     projects = db.query(Project.difficulty).distinct().all()
     return sorted([d[0] for d in projects])
+
+
+class TailorRequest(BaseModel):
+    constraint: str
+
+
+class TailorResponse(BaseModel):
+    plan: str
+
+
+@app.post("/api/projects/{project_id}/tailor", response_model=TailorResponse)
+def tailor_plan(project_id: int, body: TailorRequest, db: Session = Depends(get_db)):
+    """Rewrite a project's build plan for the visitor's constraint via Gemini."""
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="AI tailoring is not configured")
+    p = db.query(Project).filter(Project.id == project_id).first()
+    if p is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    constraint = body.constraint.strip()[:300]
+    if not constraint:
+        raise HTTPException(status_code=422, detail="Constraint is empty")
+
+    prompt = (
+        "You are the archivist of a catalogue of CS project build plans. "
+        f'Rewrite the build plan below for a builder with this constraint: "{constraint}".\n'
+        "Keep the exact markdown dialect of the original: '## Phase N: Title' headings, "
+        "each phase containing '**Step N: title.** body' paragraphs separated by blank lines. "
+        "Use 3 to 5 phases. Be concrete about tools and order of work; no preamble before "
+        "the first heading and nothing after the last step.\n\n"
+        f"Project: {p.title} — {p.subtitle}\n"
+        f"Description: {p.description}\n\n"
+        f"Original plan:\n{p.build_plan}"
+    )
+    req = urllib.request.Request(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        data=json.dumps({"contents": [{"parts": [{"text": prompt}]}]}).encode(),
+        headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
+    )
+    try:
+        out = json.load(urllib.request.urlopen(req, timeout=55))
+        text = out["candidates"][0]["content"]["parts"][0]["text"]
+    except Exception:
+        raise HTTPException(status_code=502, detail="The archivist could not draft the plan")
+    return {"plan": text}

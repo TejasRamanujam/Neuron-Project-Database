@@ -966,6 +966,69 @@ kbd {
   text-underline-offset: 5px;
 }
 
+
+/* ------------------------------ tailor -------------------------------- */
+
+.tailor {
+  margin-top: 46px;
+  border-top: 1px solid var(--rule);
+  padding-top: 26px;
+}
+
+.tailor-hint {
+  display: block;
+  font-size: 14px;
+  color: var(--ink-50);
+  margin-bottom: 12px;
+}
+
+.tailor-row {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  max-width: 620px;
+}
+
+.tailor-row input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  background: transparent;
+  font-family: var(--serif);
+  font-size: 17px;
+  padding: 6px 0 10px;
+  color: var(--ink);
+}
+
+.tailor-row input::placeholder { color: var(--ink-50); }
+.tailor-row input:focus { outline: none; border-bottom-color: var(--ink); }
+
+.tailor-btn {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tailor-btn:hover:not(:disabled) { background: var(--ink); color: var(--paper); }
+.tailor-btn:disabled { opacity: 0.4; cursor: default; }
+
+.tailor-note { margin-top: 14px; font-size: 14px; color: var(--spot); }
+
+.tailor .phase:first-of-type { margin-top: 26px; }
+
+@media (max-width: 700px) {
+  .tailor-row { flex-direction: column; align-items: stretch; }
+}
+
 /* ------------------------------ responsive ---------------------------- */
 
 @media (max-width: 900px) {

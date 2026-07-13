@@ -30,3 +30,11 @@ class SearchParams(BaseModel):
     query: Optional[str] = ""
     tags: Optional[List[str]] = None
     difficulty: Optional[List[str]] = None
+
+
+class TailorRequest(BaseModel):
+    constraint: str
+
+
+class TailorResponse(BaseModel):
+    plan: str

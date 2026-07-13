@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import type { Project } from './types'
-import { fetchProject } from './api'
+import { fetchProject, tailorPlan } from './api'
 import { Inline, parsePlan, phaseLabel, repoName, stepLabel } from './plan'
+import type { PlanPhase } from './plan'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 const slug = (d: string) => d.toLowerCase()
@@ -19,6 +20,105 @@ function RailSection({ label, children }: { label: string; children: React.React
     <section className="rail-sec">
       <h3 className="sec-label">{label}</h3>
       {children}
+    </section>
+  )
+}
+
+function PlanPhases({ phases }: { phases: PlanPhase[] }) {
+  return (
+    <>
+      {phases.map((phase, i) => {
+        const { numeral, label } = phaseLabel(phase.heading, i)
+        return (
+          <section className="phase" key={i}>
+            <header className="phase-head">
+              <span className="phase-numeral" aria-hidden="true">
+                {numeral}
+              </span>
+              <h3 className="phase-title">
+                <span className="phase-kicker">Phase {i + 1}</span>
+                {label || `Phase ${i + 1}`}
+              </h3>
+            </header>
+            <ol className="steps">
+              {phase.steps.map((step, j) => {
+                const lead = step.lead ? stepLabel(step.lead) : null
+                return (
+                  <li className="step" key={j}>
+                    {lead && (
+                      <p className="step-lead">
+                        {lead.n && <span className="step-n">Step {lead.n}</span>}
+                        <Inline text={lead.text} />
+                      </p>
+                    )}
+                    {step.body && (
+                      <p className="step-body">
+                        <Inline text={step.body} />
+                      </p>
+                    )}
+                  </li>
+                )
+              })}
+            </ol>
+          </section>
+        )
+      })}
+    </>
+  )
+}
+
+/** Ask the archivist to redraft the plan for the visitor's constraint. */
+function TailorPlan({ projectId }: { projectId: number }) {
+  const [constraint, setConstraint] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const [result, setResult] = useState<PlanPhase[] | null>(null)
+
+  useEffect(() => {
+    setConstraint('')
+    setBusy(false)
+    setFailed(false)
+    setResult(null)
+  }, [projectId])
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!constraint.trim() || busy) return
+    setBusy(true)
+    setFailed(false)
+    const plan = await tailorPlan(projectId, constraint.trim())
+    setBusy(false)
+    if (plan) setResult(parsePlan(plan))
+    else setFailed(true)
+  }
+
+  return (
+    <section className="tailor">
+      <h2 className="sec-label plan-label">Tailor this plan</h2>
+      <form onSubmit={submit} className="tailor-form">
+        <label htmlFor="tailor-input" className="tailor-hint">
+          Tell the archivist your constraint — it redrafts the plan with Gemini.
+        </label>
+        <div className="tailor-row">
+          <input
+            id="tailor-input"
+            type="text"
+            value={constraint}
+            onChange={(e) => setConstraint(e.target.value)}
+            placeholder='e.g. "I only know Python" or "one weekend, no cloud"'
+            maxLength={300}
+            disabled={busy}
+          />
+          <button type="submit" className="tailor-btn" disabled={busy || !constraint.trim()}>
+            {busy ? 'Drafting…' : 'Redraft →'}
+          </button>
+        </div>
+      </form>
+      {busy && <p className="consulting">The archivist is drafting…</p>}
+      {failed && !busy && (
+        <p className="tailor-note">The archivist is unavailable right now — try again shortly.</p>
+      )}
+      {result && !busy && <PlanPhases phases={result} />}
     </section>
   )
 }
@@ -106,42 +206,9 @@ export function Detail({ id, project, listLoading, prev, next }: Props) {
       <div className="dossier-grid">
         <div className="dossier-main">
           <h2 className="sec-label plan-label">Build plan</h2>
-          {phases.map((phase, i) => {
-            const { numeral, label } = phaseLabel(phase.heading, i)
-            return (
-              <section className="phase" key={i}>
-                <header className="phase-head">
-                  <span className="phase-numeral" aria-hidden="true">
-                    {numeral}
-                  </span>
-                  <h3 className="phase-title">
-                    <span className="phase-kicker">Phase {i + 1}</span>
-                    {label || `Phase ${i + 1}`}
-                  </h3>
-                </header>
-                <ol className="steps">
-                  {phase.steps.map((step, j) => {
-                    const lead = step.lead ? stepLabel(step.lead) : null
-                    return (
-                      <li className="step" key={j}>
-                        {lead && (
-                          <p className="step-lead">
-                            {lead.n && <span className="step-n">Step {lead.n}</span>}
-                            <Inline text={lead.text} />
-                          </p>
-                        )}
-                        {step.body && (
-                          <p className="step-body">
-                            <Inline text={step.body} />
-                          </p>
-                        )}
-                      </li>
-                    )
-                  })}
-                </ol>
-              </section>
-            )
-          })}
+          <PlanPhases phases={phases} />
+
+          <TailorPlan projectId={p.id} />
 
           <div className="twin-lists">
             <section>

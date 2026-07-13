@@ -30,3 +30,15 @@ export async function fetchDifficulties(): Promise<string[]> {
   const res = await fetch(`${API}/difficulties`)
   return res.json()
 }
+
+/** Returns the tailored plan, or null when the AI service is unavailable. */
+export async function tailorPlan(id: number, constraint: string): Promise<string | null> {
+  const res = await fetch(`${API}/projects/${id}/tailor`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ constraint }),
+  })
+  if (!res.ok) return null
+  const data = await res.json()
+  return typeof data.plan === 'string' ? data.plan : null
+}
