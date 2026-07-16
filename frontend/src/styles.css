@@ -247,6 +247,39 @@ kbd {
   white-space: nowrap;
 }
 
+.draw-specimen {
+  margin-top: 14px;
+  border: 0;
+  background: transparent;
+  color: var(--spot);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.draw-specimen span {
+  display: inline-block;
+  margin-right: 0.45em;
+  transition: transform 0.3s ease;
+}
+
+.draw-specimen:hover span,
+.draw-specimen:focus-visible span {
+  transform: rotate(90deg) scale(1.15);
+}
+
+.draw-specimen:focus-visible {
+  outline: 1px solid var(--spot);
+  outline-offset: 4px;
+}
+
+.draw-specimen:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 /* ------------------------------- filters ------------------------------ */
 
 .filters {

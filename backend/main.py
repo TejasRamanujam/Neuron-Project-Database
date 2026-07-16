@@ -18,10 +18,17 @@ app = FastAPI(title="Project Database API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=[
+        origin.strip()
+        for origin in os.environ.get(
+            "ALLOWED_ORIGINS",
+            "https://neuron-database.vercel.app,http://localhost:5173",
+        ).split(",")
+        if origin.strip()
+    ],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type"],
 )
 
 
