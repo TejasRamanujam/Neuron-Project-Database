@@ -140,6 +140,13 @@ export default function App() {
     scrollMemo.current = window.scrollY
   }
 
+  const drawSpecimen = () => {
+    if (!projects?.length) return
+    const project = projects[Math.floor(Math.random() * projects.length)]
+    rememberScroll()
+    window.location.hash = `#/p/${project.id}`
+  }
+
   /* -------------------------------- render ------------------------------ */
   return (
     <div className="press">
@@ -206,6 +213,14 @@ export default function App() {
                   : `${pad(projects?.length ?? 0)} / ${pad(total ?? 24)}`}
               </span>
             </div>
+            <button
+              type="button"
+              className="draw-specimen"
+              onClick={drawSpecimen}
+              disabled={!projects?.length || loading}
+            >
+              <span aria-hidden="true">✦</span> Draw a specimen from the archive
+            </button>
           </section>
 
           <section className="filters" aria-label="Filters">
