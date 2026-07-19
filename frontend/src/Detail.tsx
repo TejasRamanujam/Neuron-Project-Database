@@ -13,6 +13,7 @@ interface Props {
   listLoading: boolean
   prev: Project | null
   next: Project | null
+  catalogue: Project[]
 }
 
 function RailSection({ label, children }: { label: string; children: React.ReactNode }) {
@@ -123,7 +124,7 @@ function TailorPlan({ projectId }: { projectId: number }) {
   )
 }
 
-export function Detail({ id, project, listLoading, prev, next }: Props) {
+export function Detail({ id, project, listLoading, prev, next, catalogue }: Props) {
   const [fetched, setFetched] = useState<Project | null>(null)
   const [missing, setMissing] = useState(false)
 
@@ -174,6 +175,21 @@ export function Detail({ id, project, listLoading, prev, next }: Props) {
 
   const phases = parsePlan(p.build_plan)
   const d = slug(p.difficulty)
+  const related = catalogue
+    .filter((candidate) => candidate.id !== p.id)
+    .map((candidate) => ({
+      project: candidate,
+      shared: candidate.tags.filter((tag) => p.tags.includes(tag)).length,
+      sameGrade: candidate.difficulty === p.difficulty ? 1 : 0,
+      distance: Math.abs(candidate.id - p.id),
+    }))
+    .sort((left, right) =>
+      right.shared - left.shared ||
+      right.sameGrade - left.sameGrade ||
+      left.distance - right.distance ||
+      left.project.id - right.project.id
+    )
+    .slice(0, 3)
 
   return (
     <main className="dossier" data-diff={d}>
@@ -279,6 +295,25 @@ export function Detail({ id, project, listLoading, prev, next }: Props) {
           </RailSection>
         </aside>
       </div>
+
+      {related.length > 0 && (
+        <section className="related-specimens" aria-labelledby="related-specimens-title">
+          <h2 className="sec-label" id="related-specimens-title">Related specimens</h2>
+          <div className="related-grid">
+            {related.map(({ project: candidate, shared }) => (
+              <a className="related-card" href={`#/p/${candidate.id}`} key={candidate.id}>
+                <span className="related-no">№ {pad(candidate.id)}</span>
+                <strong>{candidate.title}</strong>
+                <span className="stamp" data-diff={slug(candidate.difficulty)}>{candidate.difficulty}</span>
+                <span className="related-tags">{candidate.tags.join(' · ')}</span>
+                <span className="related-reason">
+                  {shared > 0 ? `${shared} shared ${shared === 1 ? 'taxonomy' : 'taxonomies'}` : 'adjacent in the catalogue'}
+                </span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
 
       <nav className="dossier-nav" aria-label="Adjacent specimens">
         {prev ? (
